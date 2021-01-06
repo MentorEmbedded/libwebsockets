@@ -119,9 +119,14 @@ lws_role_call_alpn_negotiated(struct lws *wsi, const char *alpn)
 
 	LWS_FOR_EVERY_AVAILABLE_ROLE_START(ar)
 		if (ar->alpn && !strcmp(ar->alpn, alpn) &&
-		    lws_rops_fidx(ar, LWS_ROPS_alpn_negotiated))
+		    lws_rops_fidx(ar, LWS_ROPS_alpn_negotiated)) {
+#if defined(LWS_WITH_SERVER)
+			lws_metrics_hist_bump_priv(wsi->a.context->mth_srv_upg,
+						   ar->name);
+#endif
 			return (lws_rops_func_fidx(ar, LWS_ROPS_alpn_negotiated)).
 						   alpn_negotiated(wsi, alpn);
+		}
 	LWS_FOR_EVERY_AVAILABLE_ROLE_END;
 #endif
 	return 0;
@@ -744,6 +749,13 @@ lws_create_vhost(struct lws_context *context,
 	vh->http.mount_list = info->mounts;
 #endif
 
+#if defined(LWS_WITH_SYS_METRICS) && defined(LWS_WITH_SERVER)
+	lws_snprintf(buf, sizeof(buf), "vh.%s.rx", vh->name);
+	vh->mt_traffic_rx = lws_metric_create(context, 0, buf);
+	lws_snprintf(buf, sizeof(buf), "vh.%s.tx", vh->name);
+	vh->mt_traffic_tx = lws_metric_create(context, 0, buf);
+#endif
+
 #ifdef LWS_WITH_UNIX_SOCK
 	if (LWS_UNIX_SOCK_ENABLED(vh)) {
 		lwsl_info("Creating Vhost '%s' path \"%s\", %d protocols\n",
@@ -849,7 +861,7 @@ lws_create_vhost(struct lws_context *context,
 		goto bail1;
 	}
 #if defined(LWS_WITH_SERVER)
-	lws_context_lock(context, "create_vhost");
+	lws_context_lock(context, __func__);
 	n = _lws_vhost_init_server(info, vh);
 	lws_context_unlock(context);
 	if (n < 0) {
@@ -1339,9 +1351,15 @@ __lws_vhost_destroy2(struct lws_vhost *vh)
 	lws_dll2_foreach_safe(&vh->abstract_instances_owner, NULL, destroy_ais);
 #endif
 
+#if defined(LWS_WITH_SERVER)
+	lws_metric_destroy(&vh->mt_traffic_rx, 0);
+	lws_metric_destroy(&vh->mt_traffic_tx, 0);
+#endif
+
 	lws_dll2_remove(&vh->vh_being_destroyed_list);
 
 	__lws_lc_untag(&vh->lc);
+
 	memset(vh, 0, sizeof(*vh));
 	lws_free(vh);
 }

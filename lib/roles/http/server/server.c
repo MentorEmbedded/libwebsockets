@@ -797,6 +797,10 @@ lws_find_mount(struct lws *wsi, const char *uri_ptr, int uri_len)
 		     uri_ptr[hm->mountpoint_len] == '/' ||
 		     hm->mountpoint_len == 1)
 		    ) {
+			char hb[64];
+			lws_snprintf(hb, sizeof(hb), "mnt=\"%s\"", hm->mountpoint);
+			lws_metrics_hist_bump_priv(wsi->a.context->mth_srv_http_mnt, hb);
+
 			if (hm->origin_protocol == LWSMPRO_CALLBACK ||
 			    ((hm->origin_protocol == LWSMPRO_CGI ||
 			     lws_hdr_total_length(wsi, WSI_TOKEN_GET_URI) ||
@@ -2070,17 +2074,9 @@ raw_transition:
 		} else
 			lwsl_info("no host\n");
 
-		if (!lwsi_role_h2(wsi) || !lwsi_role_server(wsi)) {
-#if defined(LWS_WITH_SERVER_STATUS)
-			wsi->a.vhost->conn_stats.h1_trans++;
-#endif
-			if (!wsi->conn_stat_done) {
-#if defined(LWS_WITH_SERVER_STATUS)
-				wsi->a.vhost->conn_stats.h1_conn++;
-#endif
-				wsi->conn_stat_done = 1;
-			}
-		}
+		if ((!lwsi_role_h2(wsi) || !lwsi_role_server(wsi)) &&
+		    (!wsi->conn_stat_done))
+			wsi->conn_stat_done = 1;
 
 		/* check for unwelcome guests */
 #if defined(LWS_WITH_HTTP_UNCOMMON_HEADERS)
@@ -2115,9 +2111,6 @@ raw_transition:
 							uri_ptr, uri_len, meth);
 
 					/* wsi close will do the log */
-#endif
-#if defined(LWS_WITH_SERVER_STATUS)
-					wsi->a.vhost->conn_stats.rejected++;
 #endif
 					/*
 					 * We don't want anything from
@@ -2209,18 +2202,14 @@ raw_transition:
 
 			if (!strcasecmp(up, "websocket")) {
 #if defined(LWS_ROLE_WS)
-#if defined(LWS_WITH_SERVER_STATUS)
-				wsi->a.vhost->conn_stats.ws_upg++;
-#endif
+				lws_metrics_hist_bump_priv(context->mth_srv_upg, "ws");
 				lwsl_info("Upgrade to ws\n");
 				goto upgrade_ws;
 #endif
 			}
 #if defined(LWS_WITH_HTTP2)
 			if (!strcasecmp(up, "h2c")) {
-#if defined(LWS_WITH_SERVER_STATUS)
-				wsi->a.vhost->conn_stats.h2_upg++;
-#endif
+				lws_metrics_hist_bump_priv(&context->mth_srv_upg, "h2c");
 				lwsl_info("Upgrade to h2c\n");
 				goto upgrade_h2c;
 			}
@@ -2372,6 +2361,15 @@ lws_http_transaction_completed(struct lws *wsi)
 
 		return 0;
 	}
+
+#if defined(LWS_WITH_SYS_METRICS)
+	{
+		char tmp[32];
+
+		lws_snprintf(tmp, sizeof(tmp), "status=\"%u\"", wsi->http.response_code);
+		lws_metrics_caliper_report_hist(wsi->cal_conn, tmp);
+	}
+#endif
 
 	lwsl_info("%s: %s\n", __func__, lws_wsi_tag(wsi));
 
