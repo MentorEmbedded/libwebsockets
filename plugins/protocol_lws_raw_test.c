@@ -110,6 +110,8 @@ callback_raw_test(struct lws *wsi, enum lws_callback_reasons reason, void *user,
 		vhd = lws_protocol_vh_priv_zalloc(lws_get_vhost(wsi),
 				lws_get_protocol(wsi),
 				sizeof(struct per_vhost_data__raw_test));
+		if (!vhd)
+			return 0;
 		vhd->context = lws_get_context(wsi);
 		vhd->protocol = lws_get_protocol(wsi);
 		vhd->vhost = lws_get_vhost(wsi);
@@ -285,6 +287,7 @@ LWS_VISIBLE const lws_plugin_protocol_t lws_raw_test = {
 	.hdr = {
 		"lws raw test",
 		"lws_protocol_plugin",
+		LWS_BUILD_HASH,
 		LWS_PLUGIN_API_MAGIC
 	},
 
