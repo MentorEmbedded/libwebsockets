@@ -2489,7 +2489,6 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2) AND NOT LWS_WITHOUT_TESTAPPS)
 		list(APPEND TEST_SERVER_DATA
 			"${PROJECT_SOURCE_DIR}/test-apps/favicon.ico"
 			"${PROJECT_SOURCE_DIR}/test-apps/leaf.jpg"
-			"${PROJECT_SOURCE_DIR}/test-apps/candide.zip"
 			"${PROJECT_SOURCE_DIR}/test-apps/libwebsockets.org-logo.svg"
 			"${PROJECT_SOURCE_DIR}/test-apps/http2.png"
 			"${PROJECT_SOURCE_DIR}/test-apps/wss-over-h2.png"
