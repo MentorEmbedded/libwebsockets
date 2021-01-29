@@ -92,7 +92,7 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2))
 				target_link_libraries(${TEST_NAME} dl)
 			endif()
 		endif()
-		
+
 		if (LWS_LIB_INCLUDES)
 			target_include_directories(${TEST_NAME} PRIVATE "${LWS_LIB_INCLUDES}" ${LWS_LIB_BUILD_INC_PATHS})
 		else()
@@ -114,7 +114,7 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2))
 		set_target_properties(${TEST_NAME}
 			PROPERTIES
 			OUTPUT_NAME libwebsockets-${TEST_NAME})
-			
+
 		target_link_libraries(${TEST_NAME} ${LIB_LIST_AT_END})
 
 		# Add to the list of tests.
@@ -160,8 +160,8 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2))
 			# Set defines for this executable only.
 			set_property(
 				TARGET test-server-extpoll
-				PROPERTY COMPILE_DEFINITIONS 
-					EXTERNAL_POLL 
+				PROPERTY COMPILE_DEFINITIONS
+					EXTERNAL_POLL
 					INSTALL_DATADIR="${CMAKE_INSTALL_PREFIX}/share"
 				)
 
@@ -186,7 +186,6 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2))
 		list(APPEND TEST_SERVER_DATA
 			"${PROJECT_SOURCE_DIR}/test-apps/favicon.ico"
 			"${PROJECT_SOURCE_DIR}/test-apps/leaf.jpg"
-			"${PROJECT_SOURCE_DIR}/test-apps/candide.zip"
 			"${PROJECT_SOURCE_DIR}/test-apps/libwebsockets.org-logo.svg"
 			"${PROJECT_SOURCE_DIR}/test-apps/http2.png"
 			"${PROJECT_SOURCE_DIR}/test-apps/wss-over-h2.png"
@@ -196,7 +195,7 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2))
 			"${PROJECT_SOURCE_DIR}/test-apps/test.js")
 
 		add_custom_command(TARGET test-server
-						POST_BUILD 
+						POST_BUILD
 						COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:test-server>/../share/libwebsockets-test-server")
 
 		# Copy the file needed to run the server so that the test apps can
@@ -204,7 +203,7 @@ if ((LWS_ROLE_H1 OR LWS_ROLE_H2))
 		foreach (TEST_FILE ${TEST_SERVER_DATA})
 			if (EXISTS ${TEST_FILE})
 				add_custom_command(TARGET test-server
-							POST_BUILD 
+							POST_BUILD
 							COMMAND "${CMAKE_COMMAND}" -E copy "${TEST_FILE}" "$<TARGET_FILE_DIR:test-server>/../share/libwebsockets-test-server" VERBATIM)
 			endif()
 		endforeach()
